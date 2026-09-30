@@ -1,30 +1,41 @@
-# Relatório sobre implementação de comunicação entre tarefas em FIXME
+# Relatório sobre implementação de comunicação entre tarefas em Clojure.
 
 ## Introdução
 
 Este relato faz parte do processo avaliativo da disciplina de sistemas operacionas no curso superior em análise e desenvolvimento de sistemas, ofertado na Diretoria acadêmica de gestão e tecnologia da informação no campus natal-central do instituto federal de educação, ciência e tecnologia do rio grande do norte.
 
-Tem como objetivo principal relatar as implementações de comunicação entre tarefas na linguagem FIXME.
+Tem como objetivo principal relatar as implementações de comunicação entre tarefas na linguagem Clojure.
 
-O grupo de trabalho foi formado por FIXME.
+O grupo de trabalho foi formado por Geovanna Araújo e Haama Kethelen.
 
-## Comunicação entre tarefas em FIXME
+## Comunicação entre tarefas em Clojure.
 
 ### Informações gerais
 
-FIXME
-> qual o objetivo de comunicação entre tarefas? 
+> Qual o objetivo de comunicação entre tarefas? 
+Atender vários usuários simultâneos: evita esperas longas e cansativas para o usuário;
+Uso de computadores multiprocessador: a divisão de tarefas aumenta a velocidade de execução de uma aplicação;
+Modularidade: sistemas grandes e complexos tem suas tarefas divididas em módulos para melhor oganização;
+Construção de aplicações interativas: em aplicações com alta interatividade, tarefas associadas à
+interface reagem a comandos do usuário, enquanto outras tarefas comunicam
+através da rede.
 
-FIXME
-> explicar porque usar docker nesse trabalho.
-> qual a configuração do docker?
+> Porque usar docker nesse trabalho?
+Usamos docker porque ele traz vantagens como simulação realista de ambientes distribuídos, facilidade de execução e avaliação e gestão de dependência de portas.
+
+> Qual a configuração do docker?
+Dockerfile e Docker Compose.
 
 ### Comunicação entre tarefas com linhas de execução no mesmo processo
+> > Atribuição de namespace (ns), gerador de dados (produzir-dados), processador de dados (consumir dados), thread Produtora (future), thread Consumidora (future e @) e sincronização Principal (@thread-consumidor).
 
 ##Exemplo:
+```clojure
 (ns exemplo.mesmo-processo)
+
 (defn produzir-dados []
   (repeatedly 100 #(rand-int 111)))
+
 (defn consumir-dados [dados]
   (let [resultado (reduce + dados)]
     (println "### recebeu ->" resultado)))
@@ -36,21 +47,28 @@ FIXME
                           (let [dados (produzir-dados)]
                             (println "# produzir - terminado")
                             dados))
+        thread-consumidor (future
+                            (println "### consumir - iniciado")
+                            (consumir-dados @thread-produtor)
+                            (println "### consumir - terminado"))]
+    @thread-consumidor)
   (println "finalizou"))
 
-FIXME
+### Execução:
 > explicar como foi executado
 > mostrar as saídas do terminal
 > mostrar as saídas do terminal
 
-FIXME
+### Problemas na execução:
 > se houve problema na execução, enumerar os problemas e suas respectivas soluções
 
 ### Comunicação entre tarefas em processos diferentes no mesmo computador
 
-FIXME
-> texto explicando o código
-> (ns exemplo.processo-produtor
+## Resumo do código:
+> > Importações do Java (:import) (ServerSocket para executar a porta de rede) e PrintWritter (para enviar dados via texto), abertura do Servidor (ServerSocket.) (abre a porta TCP), gerenciamento de Recursos (with-open) (garante que o socket e as conexões de rede sejam fechado automaticamente assim que a transmissão terminar ou ocorrer erro), serialização e Envio de Dados (pr-str e .println) (converte os dados Clojure em uma Str formatada e envia para o consumidor através de conexão TCP).
+
+```clojure
+(ns exemplo.processo-produtor
   (:import [java.net ServerSocket]
            [java.io PrintWriter]))
 
@@ -70,18 +88,21 @@ FIXME
       (println "# produzir - dados enviados e finalizado")))
   (println "finalizou"))
 
-FIXME
+### Execução:
 > explicar como foi executado
 > mostrar as saídas do terminal
 > mostrar as saídas do terminal
 
-FIXME
+### Problemas na execução:
 > se houve problema na execução, enumerar os problemas e suas respectivas soluções
 
 ### Comunicação entre tarefas em processos diferentes em computadores diferentes
 
+## Resumo do código:
+> Importações do Java (:import) (para executar a porta de rede) e PrintWritter (para enviar dados via texto), abertura do Servidor (ServerSocket.) (abre a porta TCP), gerenciamento de Recursos (with-open) (garante que o socket e as conexões de rede sejam fechado automaticamente assim que a transmissão terminar ou ocorrer erro), serialização e Envio de Dados (pr-str e .println) (converte os dados Clojure em uma Str formatada e envia para o consumidor através de conexão TCP).
 Exemplo:
-> texto explicando o código
+
+```clojure
 (ns exemplo.rede-produtor
   (:import [java.net ServerSocket InetAddress]
            [java.io PrintWriter]))
@@ -103,6 +124,8 @@ Exemplo:
         (.println out (pr-str dados))
         (println "# produzir - dados enviados via rede com sucesso!"))))
   (println "finalizou"))
+
+
   (ns exemplo.rede-consumidor
   (:import [java.net Socket]
            [java.io BufferedReader InputStreamReader]))
@@ -123,13 +146,14 @@ Exemplo:
         (println "### consumir - terminado"))) 
     (println "finalizou")))
 
-FIXME
+### Execução:
 > explicar como foi executado
 > mostrar as saídas do terminal
 > mostrar as saídas do terminal
 
-FIXME
+### Problemas na execução:
 > se houve problema na execução, enumerar os problemas e suas respectivas soluções
+
 
 ## Considerações finais
 
