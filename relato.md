@@ -21,9 +21,22 @@ FIXME
 
 ### Comunicação entre tarefas com linhas de execução no mesmo processo
 
-FIXME
-> texto explicando o código
-> mostrar o código completo
+##Exemplo:
+(ns exemplo.mesmo-processo)
+(defn produzir-dados []
+  (repeatedly 100 #(rand-int 111)))
+(defn consumir-dados [dados]
+  (let [resultado (reduce + dados)]
+    (println "### recebeu ->" resultado)))
+
+(defn -main []
+  (println "iniciou")
+  (let [thread-produtor (future
+                          (println "# produzir - iniciado")
+                          (let [dados (produzir-dados)]
+                            (println "# produzir - terminado")
+                            dados))
+  (println "finalizou"))
 
 FIXME
 > explicar como foi executado
@@ -37,7 +50,25 @@ FIXME
 
 FIXME
 > texto explicando o código
-> mostrar o código completo
+> (ns exemplo.processo-produtor
+  (:import [java.net ServerSocket]
+           [java.io PrintWriter]))
+
+(defn produzir-dados []
+  (repeatedly 100 #(rand-int 111)))
+
+(defn -main []
+  (println "iniciou (Produtor - Processo 1)")
+  (println "# produzir - aguardando conexão no arquivo/porta 12345...")
+  
+  (with-open [server (ServerSocket. 12345)
+              socket (.accept server)
+              out (PrintWriter. (.getOutputStream socket) true)]
+    (println "# produzir - cliente conectado, gerando dados...")
+    (let [dados (produzir-dados)]
+      (.println out (pr-str dados))
+      (println "# produzir - dados enviados e finalizado")))
+  (println "finalizou"))
 
 FIXME
 > explicar como foi executado
@@ -49,9 +80,48 @@ FIXME
 
 ### Comunicação entre tarefas em processos diferentes em computadores diferentes
 
-FIXME
+Exemplo:
 > texto explicando o código
-> mostrar o código completo
+(ns exemplo.rede-produtor
+  (:import [java.net ServerSocket InetAddress]
+           [java.io PrintWriter]))
+
+(defn produzir-dados []
+  (repeatedly 100 #(rand-int 111)))
+
+(defn -main []
+  (println "iniciou (Computador A - Produtor)")
+  
+  (let [porta 12345
+        bind-ip (InetAddress/getByName "0.0.0.0")] ; Aceita conexões externas
+    (println "# produzir - escutando rede na porta" porta "...")
+    (with-open [server (ServerSocket. porta 50 bind-ip)
+                socket (.accept server)
+                out (PrintWriter. (.getOutputStream socket) true)]
+      (println "# produzir - computador remoto conectado!")
+      (let [dados (produzir-dados)]
+        (.println out (pr-str dados))
+        (println "# produzir - dados enviados via rede com sucesso!"))))
+  (println "finalizou"))
+  (ns exemplo.rede-consumidor
+  (:import [java.net Socket]
+           [java.io BufferedReader InputStreamReader]))
+(defn consumir-dados [dados]
+  (let [resultado (reduce + dados)]
+    (println "### recebeu ->" resultado)))
+(defn -main [ip-servidor]
+  (let [host (or ip-servidor "192.168.1.100") ; Insira o IP do Computador A aqui
+        porta 12345]
+    (println "iniciou (Computador B - Consumidor)")
+    (println "### conectando ao IP:" host)
+    (with-open [socket (Socket. host porta)
+                in (BufferedReader. (InputStreamReader. (.getInputStream socket)))]
+      (println "### consumir - conexão estabelecida")
+      (let [linha (.readLine in)
+            dados (clojure.edn/read-string linha)]
+        (consumir-dados dados)
+        (println "### consumir - terminado"))) 
+    (println "finalizou")))
 
 FIXME
 > explicar como foi executado
