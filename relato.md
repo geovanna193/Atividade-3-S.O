@@ -29,9 +29,9 @@ Dockerfile e Docker Compose.
 ### Comunicação entre tarefas com linhas de execução no mesmo processo
 > > Atribuição de namespace (ns), gerador de dados (produzir-dados), processador de dados (consumir dados), thread Produtora (future), thread Consumidora (future e @) e sincronização Principal (@thread-consumidor).
 
-##Exemplo:
+##Exemplo main:
 ```clojure
-(ns exemplo.mesmo-processo)
+(ns exemplo-main)
 
 (defn produzir-dados []
   (repeatedly 100 #(rand-int 111)))
@@ -54,13 +54,23 @@ Dockerfile e Docker Compose.
     @thread-consumidor)
   (println "finalizou"))
 
+(-main) ;ch
 ### Execução:
-> explicar como foi executado
-> mostrar as saídas do terminal
-> mostrar as saídas do terminal
+> explicar como foi executado: docker compose run --rm --build mesmo-processo 
+> mostrar as saídas do terminal (testes): Imagens_terminal/codigo1/teste1cod11.png
+> mostrar as saídas do terminal (resultado): Imagens_terminal/resultadocod1.png
 
 ### Problemas na execução:
-> se houve problema na execução, enumerar os problemas e suas respectivas soluções
+> se houve problema na execução, enumerar os problemas e suas respectivas soluções:
+
+Problema 1: A construção da imagem Docker falhou pois houve um erro no download da imagem base do Clojure, provavelmente indisponibilidade de tag ou oscilação de rede.
+Solução: Alterar o arquivo Dockerfile () para (FROM clojure:temurin-17-tools-deps-alpine) que muda a imagem base do Dockerfile para uma versão de suporte oficial mais estável. Funcionou? Não, a imagem foi construída mas o código deu erro clojure na última linha.
+
+Problema 2: Divergência de nomenclatura no YAML com a chamada pelo terminal.
+Solução: Modificar o arquivo docker-compose.yml para chamar a função principal no comando -e. funcionou? Não, o container é encerrado em silêncio depois da criação e não tem saída.
+
+Problema 3: Não há print na saída, falha na chamada da main.
+solução: Atualizar deps.edn, yaml e adicionar (-main) dentro do exemplo_main.clj para garantir a chamada da função. Funcionou? SIM, agora existe uma saída e é a esperada.
 
 ### Comunicação entre tarefas em processos diferentes no mesmo computador
 
@@ -87,14 +97,49 @@ Dockerfile e Docker Compose.
       (.println out (pr-str dados))
       (println "# produzir - dados enviados e finalizado")))
   (println "finalizou"))
+  (defn consumir-dados [dados]
+  (let [resultado (reduce + dados)]
+    (println "### recebeu ->" resultado)))
+
+(defn rodar-consumidor [host]
+  (println "iniciou (Consumidor - Processo 2)")
+  (println "### consumir - conectando ao servidor em" host "porta 12345...")
+  (with-open [socket (Socket. host 12345)
+              in (BufferedReader. (InputStreamReader. (.getInputStream socket)))]
+    (println "### consumir - iniciado")
+    (let [linha (.readLine in)
+          dados (clojure.edn/read-string linha)]
+      (consumir-dados dados))
+    (println "### consumir - terminado"))
+  (println "finalizou"))
+(defn -main [& args]
+  (let [host (first args)]
+    (if (and host (not= host "*command-line-args*"))
+      (rodar-consumidor host)  ; Se recebeu o IP/host como argumento, roda o CONSUMIDOR
+      (rodar-produtor))))      ; Se rodou sem argumentos, roda o PRODUTOR
+(-main)
 
 ### Execução:
-> explicar como foi executado
-> mostrar as saídas do terminal
-> mostrar as saídas do terminal
+> explicar como foi executado: docker compose up --build produtor-local ;up sobe o ecossistema de serviços (contrsói imagem, cria e inicia o contêiner, conecta as reedes e mapeia as portas TCP) diferente do run que só executa uma tarefa pontual/única dentro de um contêiner e encerra.
+docker compose down limpa os contêiners.
+docker run -rm consumidor-rede para rodar o consumidor.
+> mostrar as saídas do terminal (teste):
+> mostrar as saídas do terminal (resultado):
 
 ### Problemas na execução:
-> se houve problema na execução, enumerar os problemas e suas respectivas soluções
+> se houve problema na execução, enumerar os problemas e suas respectivas soluções:
+Problema 1: O clojure não executou o namespace correto ou usou o caminho classpath.
+Solução: Ajustar o arquivo yml para usar a chamada namespace nativa. Funcionou? N~ão, houve falha na JVM/Clojure ao tentar encontrar o código do aplicativo e o Clojure não encontrou produtor-consumidor dentro das pastas de configuração no classpath.
+
+Problema 2: Mapeamento da estrutura de diretórios classpath.
+Solução:Verificar e alterar deps.edn, docker-compose.yml. (adicionar /clojure em "src" em paths:) Funcionou? Parcialmente, o produtor funciona mas o consumidor não.
+
+Problema 3: Ambos os terminais tentaram usar as mesmas portas simultânemente.
+SOlução: Compose down e depois up, no terminal da direita (consumidor) utilizar o comando docker run --rm --network host atividade-3-so-produtor-local clj -M -m produtor-consumidor localhost
+Funcionou? Não, ainda existe problema quanto ao uso das portas.
+
+Problema 4: A estrutura do código produtor_consumidor não estava coerente no consumidor.
+Solução:REajuste no código src produtor_consumidor. Funcionou?
 
 ### Comunicação entre tarefas em processos diferentes em computadores diferentes
 
@@ -147,9 +192,9 @@ Exemplo:
     (println "finalizou")))
 
 ### Execução:
-> explicar como foi executado
-> mostrar as saídas do terminal
-> mostrar as saídas do terminal
+> explicar como foi executado:
+> mostrar as saídas do terminal (testes):
+> mostrar as saídas do terminal (resultado):
 
 ### Problemas na execução:
 > se houve problema na execução, enumerar os problemas e suas respectivas soluções

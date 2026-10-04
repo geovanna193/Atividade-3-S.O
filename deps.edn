@@ -1,0 +1,5 @@
+ {:paths ["src/clojure"]
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}}}
+ ;antes de testar o cod2: 
+ ;{:paths ["src"]
+ ;:deps {org.clojure/clojure {:mvn/version "1.11.1"}}}

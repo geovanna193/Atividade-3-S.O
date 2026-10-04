@@ -1,0 +1,29 @@
+services:
+  # Cenário 1: Linhas de execução no mesmo processo
+  mesmo-processo:
+    build: .
+    command: clj -M -m exemplo_main
+    #src/clojure/exemplo_main.clj
+
+  # Cenário 2: Processos diferentes no mesmo computador
+  produtor-local:
+    build: .
+    command: clj -M -m produtor_consumidor
+    #src/clojure/produtor_consumidor.clj
+    ports:
+      - "12345:12345"
+
+  # Cenário 3: Computadores diferentes em rede
+  produtor-rede:
+    build: .
+    command: clj -M -m produtor_consumidor
+    #src/clojure/produtor_consumidor.clj
+    ports:
+      - "12345:12345"
+
+  consumidor-rede:
+    build: .
+    command: clj -M -m produtor_consumidor produtor_rede
+    #src/clojure/produtor_consumidor.clj produtor-rede
+    depends_on:
+      - produtor-rede
