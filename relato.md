@@ -72,7 +72,7 @@ Solução: Modificar o arquivo docker-compose.yml para chamar a função princip
 Problema 3: Não há print na saída, falha na chamada da main.
 solução: Atualizar deps.edn, yaml e adicionar (-main) dentro do exemplo_main.clj para garantir a chamada da função. Funcionou? SIM, agora existe uma saída e é a esperada.
 
-### Comunicação entre tarefas em processos diferentes no mesmo computador
+### Comunicação entre tarefas em processos diferentes no mesmo computador:
 
 ## Resumo do código:
 > > Importações do Java (:import) (ServerSocket para executar a porta de rede) e PrintWritter (para enviar dados via texto), abertura do Servidor (ServerSocket.) (abre a porta TCP), gerenciamento de Recursos (with-open) (garante que o socket e as conexões de rede sejam fechado automaticamente assim que a transmissão terminar ou ocorrer erro), serialização e Envio de Dados (pr-str e .println) (converte os dados Clojure em uma Str formatada e envia para o consumidor através de conexão TCP).
@@ -139,9 +139,17 @@ SOlução: Compose down e depois up, no terminal da direita (consumidor) utiliza
 Funcionou? Não, ainda existe problema quanto ao uso das portas.
 
 Problema 4: A estrutura do código produtor_consumidor não estava coerente no consumidor.
-Solução:REajuste no código src produtor_consumidor. Funcionou?
+Solução:Reajuste no código src produtor_consumidor. Funcionou? Em partes, agora há problemas com o endereço.
 
-### Comunicação entre tarefas em processos diferentes em computadores diferentes
+Problema 5: O parâmetro localhost foi interpretado como argumento do -m no comando (docker compose run --rm --network host produtor-local clj -M -m produtor-consumidor localhost)
+Solução: Usar (docker compose run --rm -v $(pwd):/usr/src/app produtor-local clj -M -m produtor-consumidor produtor-local) Funcionou? Não, os argumentos do docker-compose.yml não foram repassados corretamente.
+
+Problema 6: Tentativa de resolver o problema 5.
+Solução: docker compose run --rm --entrypoint "clj -M -m produtor-consumidor produtor-local" produtor-local Funcionou? Não..
+
+Nenhuma outra tentativa foi feita para resolver o problema 6.
+
+### Comunicação entre tarefas em processos diferentes em computadores diferentes:
 
 ## Resumo do código:
 > Importações do Java (:import) (para executar a porta de rede) e PrintWritter (para enviar dados via texto), abertura do Servidor (ServerSocket.) (abre a porta TCP), gerenciamento de Recursos (with-open) (garante que o socket e as conexões de rede sejam fechado automaticamente assim que a transmissão terminar ou ocorrer erro), serialização e Envio de Dados (pr-str e .println) (converte os dados Clojure em uma Str formatada e envia para o consumidor através de conexão TCP).
@@ -192,17 +200,28 @@ Exemplo:
     (println "finalizou")))
 
 ### Execução:
-> explicar como foi executado:
+> explicar como foi executado: docker compose up --build produtor-rede consumidor-rede
 > mostrar as saídas do terminal (testes):
 > mostrar as saídas do terminal (resultado):
 
 ### Problemas na execução:
-> se houve problema na execução, enumerar os problemas e suas respectivas soluções
+> se houve problema na execução, enumerar os problemas e suas respectivas soluções:
+Problema 1: O serviço consumidor-rede não subiu em modo consumidor, só em produtor.
+Solução: Verificar e atualizar o produtor_consumidor.yml Funcionou? Não, o arquivo consumidor não está sendo chamado corretamente.
+
+Problema 2: Ainda tentando solucionar o problema 1.
+Solução: alterar o .yaml e definir o command em formato de array JSON. Funcionou? Não, deu load error in parser (sintaxe).
+
+Problema 3: Erro de sintaxe no YAML, o array JSON faz com que o docker execute o comando no modo exec direto sem sub shell (sh -c)
+Solução: Juste no código YAML. Funcionou? Não, o processo produtor começou mas não houve print.
+
+Nenhum outro teste foi realizado.
+
 
 
 ## Considerações finais
 
 FIXME
-> conseguiu implementar tudo e executar?
-> qual foi o aprendizado nesse trabalho?
-> alguma recomendação para próximos alunos?
+> conseguiu implementar tudo e executar? Não, apenas o primeiro código foi 100% implementado.
+> qual foi o aprendizado nesse trabalho? Clojure é uma linguagem particular e pode ser bem rígida quanto a sdua sintaxe, aprendi um pouco mais sobre gerenciamento de procesos, gestão de portas, hostname virtual, isolamento e contrato de serviços (contâiners).
+> alguma recomendação para próximos alunos? Estudem bem a sintaxe da linguagem escolhida bem como a estrutura de concorrência e Threads.  
