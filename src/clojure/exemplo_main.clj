@@ -21,5 +21,3 @@
                             (println "### consumir - terminado"))]
     @thread-consumidor)
   (println "finalizou"))
-
-(-main) ;chamada

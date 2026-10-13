@@ -38,4 +38,4 @@
     (if (and host (not= host "*command-line-args*"))
       (rodar-consumidor host)  ; Se recebeu o IP/host como argumento, roda o CONSUMIDOR
       (rodar-produtor))))      ; Se rodou sem argumentos, roda o PRODUTOR
-(-main)
+
